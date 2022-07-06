@@ -14,7 +14,7 @@ enum STORE_MESSAGES {
 
 const PING_INTERVAL_MS = 10000;
 
-export const COORDINATOR_HOST = "localhost";
+export const COORDINATOR_HOST = "coordinator.hathora.dev";
 const APP_SECRET = "secret";
 export const APP_ID = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
@@ -91,14 +91,6 @@ export function register(): Promise<CoordinatorClient> {
       }
     });
   });
-}
-
-interface Store {
-  newState(stateId: StateId, userId: UserId, data: ArrayBufferView): void;
-  subscribeUser(stateId: StateId, userId: UserId): void;
-  unsubscribeUser(stateId: StateId, userId: UserId): void;
-  unsubscribeAll(): void;
-  handleUpdate(stateId: StateId, userId: UserId, data: ArrayBufferView): void;
 }
 
 class CoordinatorClient {

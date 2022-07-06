@@ -11,16 +11,21 @@ export class HathoraClient {
     return res.data.token;
   }
 
-  public async create(token: string): Promise<string> {
-    const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/create`, Buffer.alloc(0), {
+  public async create(token: string, data: Buffer): Promise<string> {
+    const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/create`, data, {
       headers: { Authorization: token, "Content-Type": "application/octet-stream" },
     });
     return res.data.stateId;
   }
 
-  public async connect(token: string, stateId: string): Promise<WebSocketHathoraTransport> {
+  public async connect(
+    token: string,
+    stateId: string,
+    onMessage: (data: Buffer) => void,
+    onClose: (e: { code: number; reason: string }) => void
+  ): Promise<WebSocketHathoraTransport> {
     const connection = new WebSocketHathoraTransport(this.appId);
-    await connection.connect(stateId, token, console.log, console.error);
+    await connection.connect(stateId, token, onMessage, onClose);
     return connection;
   }
 }
@@ -28,7 +33,7 @@ export class HathoraClient {
 class WebSocketHathoraTransport {
   private socket: WebSocket;
 
-  constructor(private appId: string) {
+  constructor(appId: string) {
     this.socket = new WebSocket(`wss://${COORDINATOR_HOST}/${appId}`);
   }
 
@@ -38,10 +43,10 @@ class WebSocketHathoraTransport {
     onData: (data: Buffer) => void,
     onClose: (e: { code: number; reason: string }) => void
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.socket.binaryType = "arraybuffer";
       this.socket.onclose = onClose;
-      this.socket.onopen = () =>
+      this.socket.onopen = () => {
         this.socket.send(
           new Writer()
             .writeUInt8(0)
@@ -49,6 +54,8 @@ class WebSocketHathoraTransport {
             .writeUInt64([...stateId].reduce((r, v) => r * 36n + BigInt(parseInt(v, 36)), 0n))
             .toBuffer()
         );
+        resolve();
+      };
       this.socket.onmessage = ({ data }) => {
         const reader = new Reader(new Uint8Array(data as ArrayBuffer));
         const type = reader.readUInt8();
@@ -57,10 +64,9 @@ class WebSocketHathoraTransport {
           this.socket.onclose = onClose;
           onData(data as Buffer);
         } else {
-          reject("Unexpected message type: " + type);
+          console.error("Unexpected message type: " + type);
         }
       };
-      resolve();
     });
   }
 
@@ -76,7 +82,6 @@ class WebSocketHathoraTransport {
   }
 
   public write(data: Uint8Array): void {
-    console.log("ready:", this.socket.readyState);
     this.socket.send(data);
   }
 
