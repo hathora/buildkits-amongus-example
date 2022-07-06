@@ -11,7 +11,7 @@ export class HathoraClient {
     return res.data.token;
   }
 
-  public async create(token: string, data: Buffer): Promise<string> {
+  public async create(token: string, data: ArrayBuffer): Promise<string> {
     const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/create`, data, {
       headers: { Authorization: token, "Content-Type": "application/octet-stream" },
     });
@@ -21,7 +21,7 @@ export class HathoraClient {
   public async connect(
     token: string,
     stateId: string,
-    onMessage: (data: Buffer) => void,
+    onMessage: (data: ArrayBuffer) => void,
     onClose: (e: { code: number; reason: string }) => void
   ): Promise<WebSocketHathoraTransport> {
     const connection = new WebSocketHathoraTransport(this.appId);
@@ -40,13 +40,13 @@ class WebSocketHathoraTransport {
   public connect(
     stateId: string,
     token: string,
-    onData: (data: Buffer) => void,
+    onData: (data: ArrayBuffer) => void,
     onClose: (e: { code: number; reason: string }) => void
   ): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this.socket.binaryType = "arraybuffer";
       this.socket.onclose = onClose;
-      this.socket.onopen = () => {
+      this.socket.onopen = () =>
         this.socket.send(
           new Writer()
             .writeUInt8(0)
@@ -54,17 +54,13 @@ class WebSocketHathoraTransport {
             .writeUInt64([...stateId].reduce((r, v) => r * 36n + BigInt(parseInt(v, 36)), 0n))
             .toBuffer()
         );
-        resolve();
-      };
       this.socket.onmessage = ({ data }) => {
-        const reader = new Reader(new Uint8Array(data as ArrayBuffer));
-        const type = reader.readUInt8();
-        if (type === 0) {
-          this.socket.onmessage = ({ data }) => onData(data as Buffer);
-          this.socket.onclose = onClose;
-          onData(data as Buffer);
+        if ((data as ArrayBuffer).byteLength === 0) {
+          this.socket.onmessage = ({ data }) => onData(data as ArrayBuffer);
+          resolve();
         } else {
-          console.error("Unexpected message type: " + type);
+          console.error("Unexpected initial message: ", data);
+          reject();
         }
       };
     });

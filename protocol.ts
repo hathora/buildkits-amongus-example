@@ -14,7 +14,7 @@ enum STORE_MESSAGES {
 
 const PING_INTERVAL_MS = 10000;
 
-export const COORDINATOR_HOST = "coordinator.hathora.dev";
+export const COORDINATOR_HOST = "localhost";
 const APP_SECRET = "secret";
 export const APP_ID = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
@@ -36,7 +36,7 @@ function readData(socket: net.Socket, onData: (data: Buffer) => void) {
   });
 }
 
-export function register(): Promise<CoordinatorClient> {
+export function register(store: Store): Promise<CoordinatorClient> {
   return new Promise((resolve, reject) => {
     const socket = new net.Socket();
     let pingTimer: NodeJS.Timer;
@@ -65,7 +65,7 @@ export function register(): Promise<CoordinatorClient> {
     });
     socket.on("close", () => {
       console.error("Coordinator connection closed, retrying...");
-      // store.unsubscribeAll();
+      store.unsubscribeAll();
       if (pingTimer !== undefined) {
         clearInterval(pingTimer);
       }
@@ -75,22 +75,26 @@ export function register(): Promise<CoordinatorClient> {
       const reader = new Reader(data);
       const type = reader.readUInt8();
       if (type === NEW_STATE) {
-        // store.newState(reader.readUInt64(), reader.readString(), reader.readBuffer(reader.remaining()));
-        console.log("New state", reader.readUInt64(), reader.readString(), reader.readBuffer(reader.remaining()));
+        store.newState(reader.readUInt64(), reader.readString(), reader.readBuffer(reader.remaining()));
       } else if (type === SUBSCRIBE_USER) {
-        // store.subscribeUser(reader.readUInt64(), reader.readString());
-        console.log("Subscribe user", reader.readUInt64(), reader.readString());
+        store.subscribeUser(reader.readUInt64(), reader.readString());
       } else if (type === UNSUBSCRIBE_USER) {
-        // store.unsubscribeUser(reader.readUInt64(), reader.readString());
-        console.log("Unsubscribe user", reader.readUInt64(), reader.readString());
+        store.unsubscribeUser(reader.readUInt64(), reader.readString());
       } else if (type === HANDLE_UPDATE) {
-        // store.handleUpdate(reader.readUInt64(), reader.readString(), reader.readBuffer(reader.remaining()));
-        console.log("Handle update", reader.readUInt64(), reader.readString(), reader.readBuffer(reader.remaining()));
+        store.handleUpdate(reader.readUInt64(), reader.readString(), reader.readBuffer(reader.remaining()));
       } else {
         throw new Error("Unknown type: " + type);
       }
     });
   });
+}
+
+interface Store {
+  newState(stateId: StateId, userId: UserId, data: ArrayBufferView): void;
+  subscribeUser(stateId: StateId, userId: UserId): void;
+  unsubscribeUser(stateId: StateId, userId: UserId): void;
+  unsubscribeAll(): void;
+  handleUpdate(stateId: StateId, userId: UserId, data: ArrayBufferView): void;
 }
 
 class CoordinatorClient {
