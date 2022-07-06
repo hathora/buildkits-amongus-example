@@ -1,5 +1,6 @@
 import net from "net";
 import { Reader, Writer } from "bin-serde";
+import { COORDINATOR_HOST, APP_SECRET, APP_ID } from "../common/base.js";
 
 const NEW_STATE = 0;
 const SUBSCRIBE_USER = 1;
@@ -13,10 +14,6 @@ enum STORE_MESSAGES {
 }
 
 const PING_INTERVAL_MS = 10000;
-
-export const COORDINATOR_HOST = "localhost";
-const APP_SECRET = "secret";
-export const APP_ID = "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b";
 
 type StateId = bigint;
 type UserId = string;

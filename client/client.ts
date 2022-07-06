@@ -1,7 +1,7 @@
-import { APP_ID, COORDINATOR_HOST } from "./protocol.js";
 import axios from "axios";
-import { Reader, Writer } from "bin-serde";
+import { Writer } from "bin-serde";
 import WebSocket from "isomorphic-ws";
+import { APP_ID, COORDINATOR_HOST } from "../common/base.js";
 
 export class HathoraClient {
   public appId = APP_ID;
