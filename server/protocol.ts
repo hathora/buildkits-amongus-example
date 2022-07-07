@@ -5,7 +5,7 @@ import { COORDINATOR_HOST, APP_SECRET, APP_ID } from "../common/base.js";
 const NEW_STATE = 0;
 const SUBSCRIBE_USER = 1;
 const UNSUBSCRIBE_USER = 2;
-export const HANDLE_UPDATE = 3;
+const HANDLE_UPDATE = 3;
 
 enum STORE_MESSAGES {
   STATE_UPDATE = 0,
@@ -42,7 +42,7 @@ export function register(store: Store): Promise<CoordinatorClient> {
       socket.write(
         JSON.stringify({
           appSecret: APP_SECRET,
-          storeRegion: process.env.STORE_REGION ?? "unknown",
+          storeRegion: Math.random().toString(),
           authInfo: {
             anonymous: { separator: "-" },
           },

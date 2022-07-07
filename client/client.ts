@@ -1,10 +1,15 @@
 import axios from "axios";
 import { Writer } from "bin-serde";
 import WebSocket from "isomorphic-ws";
+import jwtDecode from "jwt-decode";
 import { APP_ID, COORDINATOR_HOST } from "../common/base.js";
 
 export class HathoraClient {
   public appId = APP_ID;
+
+  public static getUserIdFromToken(token: string): string {
+    return (jwtDecode(token) as { id: string }).id;
+  }
 
   public async loginAnonymous(): Promise<string> {
     const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/login/anonymous`);
@@ -46,7 +51,7 @@ class WebSocketHathoraTransport {
     return new Promise((resolve, reject) => {
       this.socket.binaryType = "arraybuffer";
       this.socket.onclose = onClose;
-      this.socket.onopen = () =>
+      this.socket.onopen = () => {
         this.socket.send(
           new Writer()
             .writeUInt8(0)
@@ -54,15 +59,9 @@ class WebSocketHathoraTransport {
             .writeUInt64([...stateId].reduce((r, v) => r * 36n + BigInt(parseInt(v, 36)), 0n))
             .toBuffer()
         );
-      this.socket.onmessage = ({ data }) => {
-        if ((data as ArrayBuffer).byteLength === 0) {
-          this.socket.onmessage = ({ data }) => onData(data as ArrayBuffer);
-          resolve();
-        } else {
-          console.error("Unexpected initial message: ", data);
-          reject();
-        }
+        resolve();
       };
+      this.socket.onmessage = ({ data }) => onData(data as ArrayBuffer);
     });
   }
 
