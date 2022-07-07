@@ -46,7 +46,10 @@ function setupViewport() {
   return vp;
 }
 
-viewport.on("clicked", (e) => connection.write(encoder.encode(JSON.stringify({ x: e.world.x, y: e.world.y }))));
+viewport.on("clicked", (e) => {
+  const pos = { x: e.world.x, y: e.world.y };
+  connection.write(encoder.encode(JSON.stringify(pos)));
+});
 
 const playerSprites: Map<string, AnimatedSprite> = new Map();
 app.ticker.add(() => {

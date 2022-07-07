@@ -1,44 +1,51 @@
 import { register } from "./protocol.js";
 
+type StateId = bigint;
+type UserId = string;
 type Point = { x: number; y: number };
-const subscribers: Map<bigint, Set<string>> = new Map();
-const positions: Map<string, { current: Point; target: Point }> = new Map();
+type GameState = Map<UserId, { current: Point; target: Point }>;
+const states: Map<StateId, { subscribers: Set<UserId>; game: GameState }> = new Map();
 
 const coordinator = await register({
   newState(stateId, userId, data) {
     console.log("newState", stateId.toString(36), userId, data);
-    subscribers.set(stateId, new Set());
+    states.set(stateId, { subscribers: new Set(), game: new Map() });
   },
   subscribeUser(stateId, userId) {
     console.log("subscribeUser", stateId.toString(36), userId);
-    subscribers.get(stateId)!.add(userId);
-    positions.set(userId, { current: { x: 4900, y: 1700 }, target: { x: 4900, y: 1700 } });
+    const { subscribers, game } = states.get(stateId)!;
+    subscribers.add(userId);
+    if (!game.has(userId)) {
+      game.set(userId, { current: { x: 4900, y: 1700 }, target: { x: 4900, y: 1700 } });
+    }
   },
   unsubscribeUser(stateId, userId) {
     console.log("unsubscribeUser", stateId.toString(36), userId);
-    subscribers.get(stateId)!.delete(userId);
+    const { subscribers, game } = states.get(stateId)!;
+    subscribers.delete(userId);
   },
   unsubscribeAll() {
     console.log("unsubscribeAll");
   },
   handleUpdate(stateId, userId, data) {
-    const buf = Buffer.from(data.buffer, data.byteOffset, data.byteLength);
-    console.log("handleUpdate", stateId.toString(36), userId, buf.toString("utf8"));
-    positions.get(userId)!.target = JSON.parse(buf.toString("utf8"));
+    const dataStr = Buffer.from(data.buffer, data.byteOffset, data.byteLength).toString("utf8");
+    console.log("handleUpdate", stateId.toString(36), userId, dataStr);
+    states.get(stateId)!.game.get(userId)!.target = JSON.parse(dataStr);
   },
 });
 
 function broadcastUpdates(stateId: bigint) {
-  const data = [...positions.entries()].map(([userId, { current }]) => ({ id: userId, x: current.x, y: current.y }));
-  subscribers.get(stateId)!.forEach((userId) => {
+  const { subscribers, game } = states.get(stateId)!;
+  const data = [...game.entries()].map(([userId, { current }]) => ({ id: userId, x: current.x, y: current.y }));
+  subscribers.forEach((userId) => {
     coordinator.stateUpdate(stateId, userId, Buffer.from(JSON.stringify(data), "utf8"));
   });
 }
 
 setInterval(() => {
-  subscribers.forEach((users, stateId) => {
-    users.forEach((userId) => {
-      const position = positions.get(userId)!;
+  states.forEach(({ game, subscribers }, stateId) => {
+    subscribers.forEach((userId) => {
+      const position = game.get(userId)!;
       const { current, target } = position;
       const dx = target.x - current.x;
       const dy = target.y - current.y;
