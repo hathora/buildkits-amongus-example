@@ -16,6 +16,16 @@ export class HathoraClient {
     return res.data.token;
   }
 
+  public async loginNickname(nickname: string): Promise<string> {
+    const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/login/nickname`, { nickname });
+    return res.data.token;
+  }
+
+  public async loginGoogle(idToken: string): Promise<string> {
+    const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/login/google`, { idToken });
+    return res.data.token;
+  }
+
   public async create(token: string, data: ArrayBuffer): Promise<string> {
     const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/create`, data, {
       headers: { Authorization: token, "Content-Type": "application/octet-stream" },
