@@ -1,33 +1,30 @@
 import axios from "axios";
-import { Writer } from "bin-serde";
-import WebSocket from "isomorphic-ws";
 import jwtDecode from "jwt-decode";
 import { APP_ID, COORDINATOR_HOST } from "../common/base.js";
+import { WebSocketHathoraTransport } from "./transport.js";
 
 export class HathoraClient {
-  public appId = APP_ID;
-
   public static getUserIdFromToken(token: string): string {
     return (jwtDecode(token) as { id: string }).id;
   }
 
   public async loginAnonymous(): Promise<string> {
-    const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/login/anonymous`);
+    const res = await axios.post(`https://${COORDINATOR_HOST}/${APP_ID}/login/anonymous`);
     return res.data.token;
   }
 
   public async loginNickname(nickname: string): Promise<string> {
-    const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/login/nickname`, { nickname });
+    const res = await axios.post(`https://${COORDINATOR_HOST}/${APP_ID}/login/nickname`, { nickname });
     return res.data.token;
   }
 
   public async loginGoogle(idToken: string): Promise<string> {
-    const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/login/google`, { idToken });
+    const res = await axios.post(`https://${COORDINATOR_HOST}/${APP_ID}/login/google`, { idToken });
     return res.data.token;
   }
 
   public async create(token: string, data: ArrayBuffer): Promise<string> {
-    const res = await axios.post(`https://${COORDINATOR_HOST}/${this.appId}/create`, data, {
+    const res = await axios.post(`https://${COORDINATOR_HOST}/${APP_ID}/create`, data, {
       headers: { Authorization: token, "Content-Type": "application/octet-stream" },
     });
     return res.data.stateId;
@@ -39,58 +36,8 @@ export class HathoraClient {
     onMessage: (data: ArrayBuffer) => void,
     onClose: (e: { code: number; reason: string }) => void
   ): Promise<WebSocketHathoraTransport> {
-    const connection = new WebSocketHathoraTransport(this.appId);
+    const connection = new WebSocketHathoraTransport(COORDINATOR_HOST, APP_ID);
     await connection.connect(stateId, token, onMessage, onClose);
     return connection;
-  }
-}
-
-class WebSocketHathoraTransport {
-  private socket: WebSocket;
-
-  constructor(appId: string) {
-    this.socket = new WebSocket(`wss://${COORDINATOR_HOST}/${appId}`);
-  }
-
-  public connect(
-    stateId: string,
-    token: string,
-    onData: (data: ArrayBuffer) => void,
-    onClose: (e: { code: number; reason: string }) => void
-  ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.socket.binaryType = "arraybuffer";
-      this.socket.onclose = onClose;
-      this.socket.onopen = () => {
-        this.socket.send(
-          new Writer()
-            .writeUInt8(0)
-            .writeString(token)
-            .writeUInt64([...stateId].reduce((r, v) => r * 36n + BigInt(parseInt(v, 36)), 0n))
-            .toBuffer()
-        );
-        resolve();
-      };
-      this.socket.onmessage = ({ data }) => onData(data as ArrayBuffer);
-    });
-  }
-
-  public disconnect(code?: number | undefined): void {
-    if (code === undefined) {
-      this.socket.onclose = () => {};
-    }
-    this.socket.close(code);
-  }
-
-  public isReady(): boolean {
-    return this.socket.readyState === this.socket.OPEN;
-  }
-
-  public write(data: Uint8Array): void {
-    this.socket.send(data);
-  }
-
-  public pong() {
-    this.socket.ping();
   }
 }
