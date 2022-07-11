@@ -1,6 +1,7 @@
 import { AnimatedSprite, Application, Loader, Sprite, Texture } from "pixi.js";
 import { Viewport } from "pixi-viewport";
 import { InterpolationBuffer } from "interpolation-buffer";
+import { APP_ID } from "../common/base";
 import { HathoraClient } from "./client.js";
 
 const app = new Application({ resizeTo: window });
@@ -14,12 +15,12 @@ viewport.addChild(new Sprite(backgroundTexture));
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-const client = new HathoraClient();
+const client = new HathoraClient(APP_ID);
 if (sessionStorage.getItem("token") === null) {
   sessionStorage.setItem("token", await client.loginAnonymous());
 }
 const token = sessionStorage.getItem("token")!;
-const userId = HathoraClient.getUserIdFromToken(token);
+const userId = HathoraClient.getUserFromToken(token).id;
 
 type Player = { id: string; x: number; y: number };
 type GameState = Player[];

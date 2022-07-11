@@ -24,7 +24,7 @@ export interface HathoraTransport {
 export class WebSocketHathoraTransport implements HathoraTransport {
   private socket: WebSocket;
 
-  constructor(coordinatorHost: string, appId: string) {
+  constructor(appId: string, coordinatorHost: string) {
     this.socket = new WebSocket(`wss://${coordinatorHost}/${appId}`);
   }
 
@@ -79,7 +79,7 @@ export class WebSocketHathoraTransport implements HathoraTransport {
 export class TCPHathoraTransport implements HathoraTransport {
   private socket: net.Socket;
 
-  constructor(private coordinatorHost: string, private appId: string) {
+  constructor(private appId: string, private coordinatorHost: string) {
     this.socket = new net.Socket();
   }
 
