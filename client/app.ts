@@ -1,8 +1,8 @@
 import { AnimatedSprite, Application, Loader, Sprite, Texture } from "pixi.js";
 import { Viewport } from "pixi-viewport";
 import { InterpolationBuffer } from "interpolation-buffer";
+import { HathoraClient } from "@hathora/client-sdk";
 import { APP_ID } from "../common/base";
-import { HathoraClient } from "./client.js";
 
 const app = new Application({ resizeTo: window });
 document.body.appendChild(app.view);
