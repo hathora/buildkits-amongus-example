@@ -47,8 +47,8 @@ function setupViewport() {
   return vp;
 }
 
-viewport.on("clicked", (e) => {
-  const pos = { x: e.world.x, y: e.world.y };
+app.view.addEventListener("click", (e) => {
+  const pos = viewport.toWorld(e.x, e.y);
   connection.write(encoder.encode(JSON.stringify(pos)));
 });
 
