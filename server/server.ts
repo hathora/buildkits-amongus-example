@@ -1,4 +1,5 @@
-import { register } from "./protocol.js";
+import { register } from "@hathora/server-sdk";
+import { APP_SECRET } from "../common/base.js";
 
 type RoomId = bigint;
 type UserId = string;
@@ -6,7 +7,7 @@ type Point = { x: number; y: number };
 type GameState = Map<UserId, { current: Point; target: Point }>;
 const states: Map<RoomId, { subscribers: Set<UserId>; game: GameState }> = new Map();
 
-const coordinator = await register({
+const coordinator = await register("coordinator.hathora.dev", APP_SECRET, {
   newState(roomId, userId, data) {
     console.log("newState", roomId.toString(36), userId, data);
     states.set(roomId, { subscribers: new Set(), game: new Map() });
@@ -26,7 +27,7 @@ const coordinator = await register({
   unsubscribeAll() {
     console.log("unsubscribeAll");
   },
-  handleUpdate(roomId, userId, data) {
+  onMessage(roomId, userId, data) {
     const dataStr = Buffer.from(data.buffer, data.byteOffset, data.byteLength).toString("utf8");
     console.log("handleUpdate", roomId.toString(36), userId, dataStr);
     states.get(roomId)!.game.get(userId)!.target = JSON.parse(dataStr);
