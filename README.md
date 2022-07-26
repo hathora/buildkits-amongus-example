@@ -1,4 +1,4 @@
-# hathora-protocol-test
+# hathora-protocol-example
 
 An example client-server application which uses the Hathora Protocol.
 
