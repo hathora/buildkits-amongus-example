@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { register } from "@hathora/server-sdk";
 import { APP_SECRET } from "../common/base.js";
 
@@ -8,12 +7,10 @@ type Point = { x: number; y: number };
 type GameState = Map<UserId, { current: Point; target: Point }>;
 const states: Map<RoomId, { subscribers: Set<UserId>; game: GameState }> = new Map();
 
-const coordinator = await register(
-  "coordinator.hathora.dev",
-  APP_SECRET,
-  uuidv4(),
-  { anonymous: { separator: "-" } },
-  {
+const coordinator = await register({
+  appSecret: APP_SECRET,
+  authInfo: { anonymous: { separator: "-" } },
+  store: {
     newState(roomId, userId, data) {
       console.log("newState", roomId.toString(36), userId, data);
       states.set(roomId, { subscribers: new Set(), game: new Map() });
@@ -38,8 +35,8 @@ const coordinator = await register(
       console.log("handleUpdate", roomId.toString(36), userId, dataStr);
       states.get(roomId)!.game.get(userId)!.target = JSON.parse(dataStr);
     },
-  }
-);
+  },
+});
 
 function broadcastUpdates(roomId: RoomId) {
   const { subscribers, game } = states.get(roomId)!;
