@@ -14,7 +14,7 @@ Start: run `npm start` in the `server` directory.
 
 ## Client
 
-Vite client using https://github.com/hathora/buildkits/tree/main/typescript-client-sdk
+[PixiJS](https://pixijs.com/) client using https://github.com/hathora/buildkits/tree/main/typescript-client-sdk
 
 Setup: run `npm install` in the `client` directory.
 
