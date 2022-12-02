@@ -1,4 +1,4 @@
-# hathora-protocol-example
+# buildkits-amongus-example
 
 An example client-server application using the Hathora BuildKits.
 
