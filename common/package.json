@@ -1,7 +1,0 @@
-{
-  "name": "common",
-  "type": "module",
-  "devDependencies": {
-    "typescript": "^4.7.4"
-  }
-}

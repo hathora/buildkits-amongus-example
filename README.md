@@ -1,10 +1,12 @@
 # hathora-protocol-example
 
-An example client-server application which uses the Hathora Protocol.
+An example client-server application using the Hathora BuildKits.
+
+![image](https://user-images.githubusercontent.com/5400947/154554747-2418c0c1-2658-45ea-bcd9-331cea37fabc.png)
 
 ## Server
 
-NodeJS server using https://github.com/hathora/server-sdk-ts
+NodeJS server using https://github.com/hathora/buildkits/tree/main/typescript-server-sdk
 
 Setup: run `npm install` in the `server` directory.
 
@@ -12,7 +14,7 @@ Start: run `npm start` in the `server` directory.
 
 ## Client
 
-Vite client using https://github.com/hathora/client-sdk-ts
+Vite client using https://github.com/hathora/buildkits/tree/main/typescript-client-sdk
 
 Setup: run `npm install` in the `client` directory.
 

@@ -2,7 +2,6 @@ import { AnimatedSprite, Application, Loader, Sprite, Texture } from "pixi.js";
 import { Viewport } from "pixi-viewport";
 import { InterpolationBuffer } from "interpolation-buffer";
 import { HathoraClient } from "@hathora/client-sdk";
-import { APP_ID } from "../common/base";
 
 const app = new Application({ resizeTo: window });
 document.body.appendChild(app.view);
@@ -15,7 +14,7 @@ viewport.addChild(new Sprite(backgroundTexture));
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-const client = new HathoraClient(APP_ID);
+const client = new HathoraClient(process.env.APP_ID!, process.env.COORDINATOR_HOST);
 if (sessionStorage.getItem("token") === null) {
   sessionStorage.setItem("token", await client.loginAnonymous());
 }
